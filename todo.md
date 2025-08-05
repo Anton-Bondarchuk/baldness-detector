@@ -1,0 +1,1 @@
+ - [ ] recieve .env variable from docker-compose -> docker -> app
