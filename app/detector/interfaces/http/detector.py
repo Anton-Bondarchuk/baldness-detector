@@ -1,11 +1,13 @@
 import base64
 import json
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request
+from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request, Depends
 from fastapi.responses import StreamingResponse
 
 from app.detector.infra.baldness_detector import BaldnessDetector
 from app.detector.domain.models.shemas import BaldnessResult
+from app.oauth.infra.get_current_user import get_current_user
+from app.oauth.domain.models.user import User
 
 router = APIRouter(
     tags=["Baldness Detection"],
@@ -15,17 +17,18 @@ router = APIRouter(
 async def detect_baldness(
     request: Request,
     photo: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Detect baldness from uploaded photo.
     Returns processed image with highlighted bald areas and baldness level.
     """
     try:
-        # Access authenticated user info
-        user = request.state.user
+        # Access authenticated user info from JWT dependency
+        user = current_user
         
         # Log the request for auditing
-        print(f"Processing baldness detection for user: {user.get('email', 'unknown')}")
+        print(f"Processing baldness detection for user: {getattr(user, 'email', 'unknown')}")
         
         # Validate file type
         if not photo.content_type.startswith('image/'):
@@ -42,6 +45,9 @@ async def detect_baldness(
         
         return result
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (including 401 from dependency)
+        raise
     except Exception as e:
         # Handle any unexpected errors
         raise HTTPException(
@@ -53,14 +59,15 @@ async def detect_baldness(
 async def stream_baldness_detection(
     request: Request,
     photo: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Stream baldness detection results.
     Returns a stream containing the processed image and baldness level.
     """
     try:
-        # Access authenticated user info
-        user = request.state.user
+        # Access authenticated user info from JWT dependency
+        user = current_user
         
         # Validate file type
         if not photo.content_type.startswith('image/'):
@@ -99,6 +106,9 @@ async def stream_baldness_detection(
             media_type="application/octet-stream"
         )
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (including 401 from dependency)
+        raise
     except Exception as e:
         # Handle any unexpected errors
         raise HTTPException(

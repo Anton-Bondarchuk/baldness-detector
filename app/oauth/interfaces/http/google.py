@@ -1,56 +1,111 @@
-from authlib.integrations.starlette_client import OAuth
+from fastapi import Request, APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import Request, APIRouter
-from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
-from fastapi.responses import RedirectResponse, HTMLResponse
-
-from app.config import google_oauth_config
-
-
-oauth = OAuth()
-oauth.register(
-    name="google",
-    client_id=google_oauth_config.client_id,
-    client_secret=google_oauth_config.client_secret.get_secret_value(),
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={"scope": "openid email profile"},
+from app.oauth.interfaces.dto.auth import (
+    GoogleAuthDTO, EmailAuthDTO, AuthResponseDTO
 )
+from app.oauth.domain.services.auth_service import AuthService
+from app.oauth.infra.pg_user_repository import PgUserRepository
+from app.oauth.infra.get_db import get_db
+from app.oauth.infra.get_current_user import get_current_user
 
-# Export google for convenience
-google = oauth.google
-templates = Jinja2Templates(directory="templates")
+router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
-
-router = APIRouter()
-
-@router.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    google_auth_url = request.url_for("auth_callback")
-
-    return templates.TemplateResponse(
-        "index.html", {"request": request, "google_auth_url": f"/login"}
-    )
-
-
-@router.get("/login")
-async def login(request: Request):
-    redirect_uri = request.url_for("auth_callback")
+@router.post("/google", response_model=AuthResponseDTO)
+async def authenticate_google(
+    google_auth: GoogleAuthDTO,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Authenticate user with Google OAuth access token
     
-    return await oauth.google.authorize_redirect(request, redirect_uri)
-
-
-@router.get("/auth/callback")
-async def auth_callback(request: Request):
+    This endpoint accepts a Google OAuth access token from a mobile app
+    and returns a JWT token for API access.
+    
+    Args:
+        google_auth: Google authentication data containing access_token
+        db: Database session
+        
+    Returns:
+        AuthResponseDTO: JWT token and user information
+        
+    Raises:
+        HTTPException: If authentication fails
+    """
     try:
-        token = await oauth.google.authorize_access_token(request)
-        print("TOKEN STRUCTURE:", token)
-        print("TOKEN KEYS:", list(token.keys()))
-
-        # Use userinfo endpoint instead of trying to parse id_token
-        user_info = await oauth.google.userinfo(token=token)
-        return {"message": "Authentication successful!", "user_info": user_info}
-
+        user_repository = PgUserRepository(db)
+        auth_service = AuthService(user_repository)
+        
+        result = await auth_service.authenticate_with_google(google_auth)
+        return result
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error in auth_callback: {e}")
-        return {"error": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Authentication failed: {str(e)}"
+        )
+
+@router.post("/email", response_model=AuthResponseDTO)
+async def authenticate_email(
+    email_auth: EmailAuthDTO,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Authenticate user with email and name (for direct mobile registration)
+    
+    This endpoint allows mobile apps to register/login users directly
+    with email and name without Google OAuth.
+    
+    Args:
+        email_auth: Email authentication data
+        db: Database session
+        
+    Returns:
+        AuthResponseDTO: JWT token and user information
+        
+    Raises:
+        HTTPException: If authentication fails
+    """
+    try:
+        user_repository = PgUserRepository(db)
+        auth_service = AuthService(user_repository)
+        
+        result = await auth_service.authenticate_with_email(email_auth)
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Authentication failed: {str(e)}"
+        )
+
+@router.get("/me")
+async def get_current_user(
+    current_user=Depends(get_current_user)
+):
+    """
+    Get current user information from JWT token
+    
+    Returns:
+        User information for the authenticated user
+    """
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "picture": current_user.picture,
+        "google_id": current_user.google_id,
+        "created_at": current_user.created_at.isoformat() if current_user.created_at else None
+    }
+
+@router.get("/health")
+async def health_check():
+    """
+    Health check endpoint for the authentication service
+    """
+    return {"status": "healthy", "service": "authentication"}

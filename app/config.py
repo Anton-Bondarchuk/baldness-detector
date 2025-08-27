@@ -37,12 +37,34 @@ class GoogleOAuthSettings(BaseSettings):
 class AppSettings(BaseSettings):
     secret_key: SecretStr
     debug: bool = False
+    jwt_secret_key: SecretStr
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_hours: int = 24
     # allowed_hosts: list[str] = ["*"]
     
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         env_prefix="APP_",
+        extra="allow",
+    )
+
+class DatabaseSettings(BaseSettings):
+    host: str = "localhost"
+    port: int = 5432
+    user: str = "postgres"
+    password: SecretStr
+    database: str = "baldness_detector"
+    sql_echo: bool = False
+    
+    @property
+    def sqlalchemy_database_url(self) -> str:
+        return f"postgresql+asyncpg://{self.user}:{self.password.get_secret_value()}@{self.host}:{self.port}/{self.database}"
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="DB_",
         extra="allow",
     )
 
@@ -60,6 +82,7 @@ class AppSettings(BaseSettings):
 
 google_oauth_config = GoogleOAuthSettings()
 app_config = AppSettings()
+db_config = DatabaseSettings()
 
 # Create config instances
 # log_config = LoggingSettings()

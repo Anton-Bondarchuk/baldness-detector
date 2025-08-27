@@ -27,7 +27,6 @@ async def validate_oauth_token(token: str) -> Dict:
     # For Google OAuth2, you would use their tokeninfo endpoint
     # This is just a placeholder implementation
     try:
-        # For Google tokens
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"https://oauth2.googleapis.com/tokeninfo?id_token={token}"
