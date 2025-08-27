@@ -35,6 +35,9 @@ class GoogleOAuthSettings(BaseSettings):
     )
 
 class AppSettings(BaseSettings):
+    host: str = "0.0.0.0"
+    port: int = 8000
+    hot_reload: bool = False
     secret_key: SecretStr
     debug: bool = False
     jwt_secret_key: SecretStr

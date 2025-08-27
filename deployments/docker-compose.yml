@@ -3,6 +3,8 @@ services:
     build:
       context: ..
       dockerfile: deployments/Dockerfile
+    volumes:
+      - ../app:/src/app 
     ports:
       - "${APP_PORT:-8000}:8000"
     depends_on:
