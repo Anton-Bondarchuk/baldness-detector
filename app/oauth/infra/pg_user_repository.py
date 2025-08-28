@@ -67,3 +67,39 @@ class PgUserRepository:
         result = await self.session.execute(query)
         
         return result.scalars().first()
+    
+    async def get_by_id(self, user_id: int) -> User:
+        """Get a user by ID"""
+        query = select(User).where(User.id == user_id)
+        result = await self.session.execute(query)
+        
+        return result.scalars().first()
+    
+    async def update_wallet_address(self, user_id: int, wallet_address: str) -> User:
+        """
+        Update the wallet address for a user
+        
+        Args:
+            user_id: The user's database ID
+            wallet_address: The wallet address to assign
+            
+        Returns:
+            Updated user entity
+        """
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(wallet_address=wallet_address)
+            .returning(User)
+        )
+        result = await self.session.execute(stmt)
+        updated_user = result.scalars().first()
+        await self.session.commit()
+        return updated_user
+    
+    async def get_by_wallet_address(self, wallet_address: str) -> User:
+        """Get a user by wallet address"""
+        query = select(User).where(User.wallet_address == wallet_address)
+        result = await self.session.execute(query)
+        
+        return result.scalars().first()

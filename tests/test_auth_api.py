@@ -42,6 +42,11 @@ async def test_email_auth():
         if response.status_code == 200:
             data = response.json()
             print(f"Success! Got JWT token: {data['access_token'][:20]}...")
+            print(f"User info: {data.get('user', {})}")
+            # Check if wallet_address is included in response
+            user_data = data.get('user', {})
+            if 'wallet_address' in user_data:
+                print(f"Wallet address: {user_data['wallet_address'] or 'Pending creation...'}")
             return data['access_token']
         else:
             print(f"Error: {response.text}")
@@ -69,7 +74,11 @@ async def test_protected_endpoint(token):
         print(f"Protected Endpoint Status: {response.status_code}")
         
         if response.status_code == 200:
-            print(f"User data: {json.dumps(response.json(), indent=2)}")
+            user_data = response.json()
+            print(f"User data: {json.dumps(user_data, indent=2)}")
+            # Check if wallet_address is included
+            if 'wallet_address' in user_data:
+                print(f"Wallet address: {user_data['wallet_address'] or 'Pending creation...'}")
         else:
             print(f"Error: {response.text}")
 

@@ -11,7 +11,8 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    jwt_auth: JWTAuth = Depends(JWTAuth)
 ) -> User:
     """
     Dependency to get the current authenticated user from JWT token
@@ -25,9 +26,7 @@ async def get_current_user(
         
     Raises:
         HTTPException: If token is invalid or user not found
-    """
-    jwt_auth = JWTAuth()
-    
+    """    
     # Verify the JWT token
     payload = jwt_auth.verify_token(credentials.credentials)
     

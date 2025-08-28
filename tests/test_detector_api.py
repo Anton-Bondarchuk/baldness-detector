@@ -65,7 +65,7 @@ async def test_detect_baldness_success(token):
     
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
-            f"{BASE_URL}/detect-baldness",
+            f"{BASE_URL}/api/v1/detect-baldness",
             headers=headers,
             files=files
         )
@@ -112,7 +112,7 @@ async def test_detect_baldness_no_auth():
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{BASE_URL}/detect-baldness",
+            f"{BASE_URL}/api/v1/detect-baldness",
             files=files
         )
         
@@ -146,7 +146,7 @@ async def test_detect_baldness_invalid_file(token):
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{BASE_URL}/detect-baldness",
+            f"{BASE_URL}/api/v1/detect-baldness",
             headers=headers,
             files=files
         )
@@ -174,7 +174,7 @@ async def test_detect_baldness_missing_file(token):
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{BASE_URL}/detect-baldness",
+            f"{BASE_URL}/api/v1/detect-baldness",
             headers=headers
         )
         
@@ -207,7 +207,7 @@ async def test_stream_baldness_detection_success(token):
     
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
-            f"{BASE_URL}/detect-baldness/stream",
+            f"{BASE_URL}/api/v1/detect-baldness/stream",
             headers=headers,
             files=files
         )
@@ -254,7 +254,7 @@ async def test_stream_baldness_detection_no_auth():
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{BASE_URL}/detect-baldness/stream",
+            f"{BASE_URL}/api/v1/detect-baldness/stream",
             files=files
         )
         
@@ -298,7 +298,7 @@ async def test_different_image_formats(token):
         
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                f"{BASE_URL}/detect-baldness",
+                f"{BASE_URL}/api/v1/detect-baldness",
                 headers=headers,
                 files=files
             )
@@ -337,7 +337,7 @@ async def test_large_image(token):
     
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
-            f"{BASE_URL}/detect-baldness",
+            f"{BASE_URL}/api/v1/detect-baldness",
             headers=headers,
             files=files
         )

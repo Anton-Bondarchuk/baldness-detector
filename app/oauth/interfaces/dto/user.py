@@ -6,6 +6,7 @@ class UserDTO(BaseModel):
     name: str
     picture: Optional[str] = None
     google_id: Optional[str] = None
+    wallet_address: Optional[str] = None
     
     @field_validator('name')
     def validate_name(cls, v):

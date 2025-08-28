@@ -34,6 +34,17 @@ class GoogleOAuthSettings(BaseSettings):
         extra="allow",
     )
 
+class WalletSettings(BaseSettings):
+    thirdweb_secret_key: SecretStr
+    thirdweb_client_id: str = "your-thirdweb-client-id"
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="WALLET_",
+        extra="allow",
+    )
+
 class AppSettings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
@@ -86,6 +97,7 @@ class DatabaseSettings(BaseSettings):
 google_oauth_config = GoogleOAuthSettings()
 app_config = AppSettings()
 db_config = DatabaseSettings()
+wallet_config = WalletSettings()
 
 # Create config instances
 # log_config = LoggingSettings()

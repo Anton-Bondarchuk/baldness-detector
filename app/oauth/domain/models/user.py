@@ -12,6 +12,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     picture = Column(String(1024), nullable=True)
     google_id = Column(String(255), nullable=True, index=True)
+    wallet_address = Column(String(255), nullable=True, unique=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     def __repr__(self):
