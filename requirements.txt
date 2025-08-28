@@ -34,4 +34,6 @@ starlette==0.47.2
 typing-inspection==0.4.1
 typing_extensions==4.14.1
 uvicorn==0.35.0
+thirdweb-sdk>=2.0.0
+pillow>=9.0.0
 watchfiles==1.1.0

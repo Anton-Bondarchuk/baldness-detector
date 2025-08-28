@@ -1,21 +1,28 @@
-from fastapi import Request, APIRouter, Depends, HTTPException, status
+from fastapi import Request, APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.oauth.domain.models.user import User
 from app.oauth.interfaces.dto.auth import (
     GoogleAuthDTO, EmailAuthDTO, AuthResponseDTO
 )
-from app.oauth.domain.services.auth_service import AuthService
 from app.oauth.infra.pg_user_repository import PgUserRepository
 from app.oauth.infra.get_db import get_db
 from app.oauth.infra.get_current_user import get_current_user
+from app.oauth.interfaces.action.auth import (
+    _authenticate_with_google,
+    _authenticate_with_email
+)
+from app.oauth.infra.jwt_auth import JWTAuth
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
 @router.post("/google", response_model=AuthResponseDTO)
 async def authenticate_google(
     google_auth: GoogleAuthDTO,
-    db: AsyncSession = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_db),
+    jwt_auth: JWTAuth = Depends(JWTAuth)
 ):
     """
     Authenticate user with Google OAuth access token
@@ -25,7 +32,9 @@ async def authenticate_google(
     
     Args:
         google_auth: Google authentication data containing access_token
-        db: Database session
+        background_tasks: FastAPI background tasks for wallet creation
+        session: Database session
+        jwt_auth: JWT authentication service
         
     Returns:
         AuthResponseDTO: JWT token and user information
@@ -34,12 +43,9 @@ async def authenticate_google(
         HTTPException: If authentication fails
     """
     try:
-        user_repository = PgUserRepository(db)
-        auth_service = AuthService(user_repository)
         
-        result = await auth_service.authenticate_with_google(google_auth)
-        return result
-        
+        return await _authenticate_with_google(session, google_auth, jwt_auth, background_tasks)
+    
     except HTTPException:
         raise
     except Exception as e:
@@ -51,7 +57,9 @@ async def authenticate_google(
 @router.post("/email", response_model=AuthResponseDTO)
 async def authenticate_email(
     email_auth: EmailAuthDTO,
-    db: AsyncSession = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    jwt_auth: JWTAuth = Depends(JWTAuth)
 ):
     """
     Authenticate user with email and name (for direct mobile registration)
@@ -61,7 +69,9 @@ async def authenticate_email(
     
     Args:
         email_auth: Email authentication data
+        background_tasks: FastAPI background tasks for wallet creation
         db: Database session
+        jwt_auth: JWT authentication service
         
     Returns:
         AuthResponseDTO: JWT token and user information
@@ -70,12 +80,9 @@ async def authenticate_email(
         HTTPException: If authentication fails
     """
     try:
-        user_repository = PgUserRepository(db)
-        auth_service = AuthService(user_repository)
-        
-        result = await auth_service.authenticate_with_email(email_auth)
-        return result
-        
+
+        return await _authenticate_with_email(db, email_auth, jwt_auth, background_tasks)
+
     except HTTPException:
         raise
     except Exception as e:
@@ -86,7 +93,7 @@ async def authenticate_email(
 
 @router.get("/me")
 async def get_current_user(
-    current_user=Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Get current user information from JWT token
@@ -100,6 +107,7 @@ async def get_current_user(
         "name": current_user.name,
         "picture": current_user.picture,
         "google_id": current_user.google_id,
+        "wallet_address": current_user.wallet_address,
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None
     }
 

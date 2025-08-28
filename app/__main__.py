@@ -46,7 +46,7 @@ def main():
 
     # Include authentication router
     app.include_router(google.router)
-    app.include_router(detector.router)
+    app.include_router(detector.router, prefix="/api/v1")
 
     @app.get("/")
     async def root():

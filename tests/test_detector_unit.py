@@ -77,8 +77,9 @@ class TestDetectBaldnessEndpoint:
                 "photo": ("test.png", sample_image_bytes, "image/png")
             }
             
-            # Make request
-            response = client.post("/detect-baldness", files=files)
+            # Make request - note we need to mock the dependency
+            with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
+                response = client.post("/detect-baldness", files=files)
             
             # Assertions
             assert response.status_code == 200
@@ -95,9 +96,7 @@ class TestDetectBaldnessEndpoint:
 
     def test_detect_baldness_invalid_file_type(self, client, mock_user):
         """Test rejection of non-image files"""
-        with patch('fastapi.Request') as mock_request:
-            mock_request.state.user = mock_user
-            
+        with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
             files = {
                 "photo": ("test.txt", b"not an image", "text/plain")
             }
@@ -109,9 +108,7 @@ class TestDetectBaldnessEndpoint:
 
     def test_detect_baldness_missing_file(self, client, mock_user):
         """Test request without file upload"""
-        with patch('fastapi.Request') as mock_request:
-            mock_request.state.user = mock_user
-            
+        with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
             response = client.post("/detect-baldness")
             
             assert response.status_code == 422  # Validation error
@@ -122,9 +119,7 @@ class TestDetectBaldnessEndpoint:
         # Setup mock to raise exception
         mock_process_image.side_effect = Exception("Processing failed")
         
-        with patch('fastapi.Request') as mock_request:
-            mock_request.state.user = mock_user
-            
+        with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
             files = {
                 "photo": ("test.png", sample_image_bytes, "image/png")
             }
@@ -144,9 +139,7 @@ class TestStreamBaldnessDetectionEndpoint:
         # Setup mock
         mock_process_image.return_value = sample_baldness_result
         
-        with patch('fastapi.Request') as mock_request:
-            mock_request.state.user = mock_user
-            
+        with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
             files = {
                 "photo": ("test.png", sample_image_bytes, "image/png")
             }
@@ -159,9 +152,7 @@ class TestStreamBaldnessDetectionEndpoint:
 
     def test_stream_baldness_detection_invalid_file_type(self, client, mock_user):
         """Test streaming endpoint with invalid file type"""
-        with patch('fastapi.Request') as mock_request:
-            mock_request.state.user = mock_user
-            
+        with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
             files = {
                 "photo": ("test.txt", b"not an image", "text/plain")
             }
@@ -177,9 +168,7 @@ class TestStreamBaldnessDetectionEndpoint:
         # Setup mock to raise exception
         mock_process_image.side_effect = Exception("Processing failed")
         
-        with patch('fastapi.Request') as mock_request:
-            mock_request.state.user = mock_user
-            
+        with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
             files = {
                 "photo": ("test.png", sample_image_bytes, "image/png")
             }
@@ -242,9 +231,7 @@ class TestValidationAndErrorHandling:
         ]
         
         for content_type, should_pass in test_cases:
-            with patch('fastapi.Request') as mock_request:
-                mock_request.state.user = mock_user
-                
+            with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
                 files = {
                     "photo": ("test_file", b"fake_content", content_type)
                 }
@@ -267,9 +254,7 @@ class TestResponseFormat:
         """Test that response matches the expected schema"""
         mock_process_image.return_value = sample_baldness_result
         
-        with patch('fastapi.Request') as mock_request:
-            mock_request.state.user = mock_user
-            
+        with patch('app.detector.interfaces.http.detector.get_current_user', return_value=mock_user):
             files = {
                 "photo": ("test.png", sample_image_bytes, "image/png")
             }

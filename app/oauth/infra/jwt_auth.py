@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional
 import jwt
 from app.config import app_config
@@ -18,15 +18,15 @@ class JWTAuth:
             JWT token string
         """
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(hours=app_config.jwt_expiration_hours)
-        
+            expire = datetime.now(UTC) + timedelta(hours=app_config.jwt_expiration_hours)
+
         to_encode = {
             "sub": str(user_id),
             "email": email,
             "exp": expire,
-            "iat": datetime.utcnow()
+            "iat": datetime.datetime.now(datetime.UTC)
         }
         
         encoded_jwt = jwt.encode(
