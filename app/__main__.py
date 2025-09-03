@@ -44,9 +44,11 @@ def main():
         allow_headers=["*"],
     )
 
+    v1_prefix = "/api/v1"
+
     # Include authentication router
-    app.include_router(google.router)
-    app.include_router(detector.router)
+    app.include_router(google.router, prefix=v1_prefix, tags=["Authentication"])
+    app.include_router(detector.router, prefix=v1_prefix, tags=["Detector"])
 
     @app.get("/")
     async def root():

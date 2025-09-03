@@ -10,9 +10,9 @@ from app.oauth.infra.pg_user_repository import PgUserRepository
 from app.oauth.infra.get_db import get_db
 from app.oauth.infra.get_current_user import get_current_user
 
-router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
+router = APIRouter()
 
-@router.post("/google", response_model=AuthResponseDTO)
+@router.post("/auth/google", response_model=AuthResponseDTO)
 async def authenticate_google(
     google_auth: GoogleAuthDTO,
     db: AsyncSession = Depends(get_db)
@@ -48,7 +48,7 @@ async def authenticate_google(
             detail=f"Authentication failed: {str(e)}"
         )
 
-@router.post("/email", response_model=AuthResponseDTO)
+@router.post("/auth/email", response_model=AuthResponseDTO)
 async def authenticate_email(
     email_auth: EmailAuthDTO,
     db: AsyncSession = Depends(get_db)
@@ -84,7 +84,7 @@ async def authenticate_email(
             detail=f"Authentication failed: {str(e)}"
         )
 
-@router.get("/me")
+@router.get("/auth/me")
 async def get_current_user(
     current_user=Depends(get_current_user)
 ):
@@ -103,7 +103,7 @@ async def get_current_user(
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None
     }
 
-@router.get("/health")
+@router.get("/auth/health")
 async def health_check():
     """
     Health check endpoint for the authentication service
