@@ -40,7 +40,7 @@ stop:
 # Run Alembic migrations
 # Example: docker-compose run --rm app alembic upgrade head
 migrate:
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm $(SERVICE) alembic upgrade head
+	$(COMPOSE) -f $(COMPOSE_FILE) run --rm $(SERVICE) python -m alembic upgrade head
 
 # Run API tests inside the Docker container
 # Example: docker-compose run --rm app pytest tests/

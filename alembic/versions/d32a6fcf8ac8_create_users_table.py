@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), sa.Identity(), primary_key=True),
         sa.Column('email', sa.String(255), nullable=False, unique=True, index=True),
         sa.Column('name', sa.String(255), nullable=False),
-        sa.Column('picture', sa.String(1024), nullable=True),
+        sa.Column('picture', sa.String(2048), nullable=True),
         sa.Column('google_id', sa.String(255), nullable=True, index=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
     )

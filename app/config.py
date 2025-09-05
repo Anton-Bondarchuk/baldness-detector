@@ -25,6 +25,7 @@ class GoogleOAuthSettings(BaseSettings):
     client_id: str = "your-google-client-id"
     client_secret: SecretStr 
     conf_url: HttpUrl = "https://accounts.google.com/.well-known/openid-configuration"
+    redirect_uri: Optional[HttpUrl] = 'http://localhost:8000/auth/callback'
     scope: str = "openid email profile"
     
     model_config = SettingsConfigDict(

@@ -1,7 +1,8 @@
 import asyncio
 
+from fastapi.templating import Jinja2Templates
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
@@ -44,11 +45,9 @@ def main():
         allow_headers=["*"],
     )
 
-    v1_prefix = "/api/v1"
-
     # Include authentication router
-    app.include_router(google.router, prefix=v1_prefix, tags=["Authentication"])
-    app.include_router(detector.router, prefix=v1_prefix, tags=["Detector"])
+    app.include_router(google.router, tags=["Authentication"])
+    app.include_router(detector.router, tags=["Detector"])
 
     @app.get("/")
     async def root():

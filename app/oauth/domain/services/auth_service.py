@@ -16,7 +16,7 @@ class AuthService:
         self.user_repository = user_repository
         self.jwt_auth = JWTAuth()
 
-    async def authenticate_with_google(self, google_auth: GoogleAuthDTO) -> AuthResponseDTO:
+    async def authenticate_with_google(self, google_auth: GoogleAuthDTO, client_id: str) -> AuthResponseDTO:
         """
         Authenticate user with Google OAuth token
         
@@ -31,7 +31,7 @@ class AuthService:
         """
         try:
             # Verify Google token and get user info
-            user_info = await self._verify_google_token(google_auth.access_token)
+            user_info = await self._verify_google_token(google_auth.access_token, client_id)
             
             # Create or update user
             user_dto = UserDTO(
@@ -93,17 +93,22 @@ class AuthService:
                 detail=f"Email authentication failed: {str(e)}"
             )
 
-    async def _verify_google_token(self, access_token: str) -> dict:
+    async def _verify_google_token(self, access_token: str, client_id: str) -> dict:
         """
         Verify Google access token and fetch user info
         
         Args:
             access_token: Google access token
+            client_id: Google client ID
             
         Returns:
             User information from Google
         """
-        async with AsyncOAuth2Client() as client:
+        async with AsyncOAuth2Client(
+            client_id=client_id,
+            client_secret=google_oauth_config.client_secret,
+            redirect_uri=google_oauth_config.redirect_uri
+            ) as client:
             resp = await client.get(
                 'https://www.googleapis.com/oauth2/v2/userinfo',
                 headers={'Authorization': f'Bearer {access_token}'}
